@@ -28,6 +28,13 @@ var input = {
   left: false,
   right: false
 }
+var camera = {
+  xMin: 100,
+  xMax: 500,
+  xOff: 100,
+  x: 0,
+  y: 0
+}
 
 /**
  * @function onkeydown
@@ -108,24 +115,41 @@ masterLoop(performance.now());
  * the number of milliseconds passed since the last frame.
  */
 function update(elapsedTime) {
-  var speed = 1;
+  var speed = 5;
 
   // set the velocity
   player.velocity.x = 0;
-  if(input.left) player.velocity.x -= speed;
-  if(input.right) player.velocity.x += speed;
+  if(input.right) player.velocity.x -= speed;
+  if(input.left) player.velocity.x += speed;
   player.velocity.y = 0;
   if(input.up) player.velocity.y -= speed / 2;
-  if(input.down) player.velocity.y += speed * 2;
+  if(input.down) player.velocity.y += speed / 2;
 
   // determine player angle
   player.angle = 0;
   if(player.velocity.x < 0) player.angle = -Math.PI/8;
   if(player.velocity.x > 0) player.angle = Math.PI/8;
 
+  var deltaX = player.position.x;
+
+
   // move the player
   player.position.x += player.velocity.x;
   player.position.y += player.velocity.y;
+
+  // update the camera
+  camera.xOff += player.velocity.x;
+  if (camera.xOff > camera.xMax) {
+    camera.x += camera.xOff - camera.xMax;
+    camera.xOff = camera.xMax;
+  }
+
+  if (camera.xOff < camera.xMin) {
+    camera.x -= camera.xMin - camera.xOff;
+    camera.xOff = camera.xMin;
+  }
+
+  if (camera.xOff < 0) camera.x = 0;
 }
 
 /**
@@ -137,13 +161,24 @@ function update(elapsedTime) {
   */
 function render(elapsedTime, ctx) {
   // Render the backgrounds
+  ctx.save();
+  ctx.translate(-camera.x * 0.2, 0);
   ctx.drawImage(backgrounds[2], 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(-camera.x * 0.6, 0);
   ctx.drawImage(backgrounds[1], 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(-camera.x, 0);
   ctx.drawImage(backgrounds[0], 0, 0);
+  ctx.restore();
 
   // Render the player
   ctx.save();
-  ctx.translate(player.position.x, player.position.y);
+  ctx.translate(camera.xOff, player.position.y);
   ctx.rotate(player.angle);
   ctx.drawImage(player.img, 0, 0, 131, 53, -60, 0, 131, 53);
   ctx.restore();
